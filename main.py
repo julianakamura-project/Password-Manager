@@ -1,12 +1,50 @@
+import random
 from tkinter import *
+from tkinter import messagebox
+import pyperclip as py
+
 FONT = "Cambria"
+LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+NUMBERS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+SYMBOLS = ['!', '#', '$', '%', '&', '(', ')', '*', '+']
+
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
+
+def generate_password():
+    pass_entry.delete(0, END)
+
+    password_letters = [random.choice(LETTERS) for char in range(random.randint(8,10))]
+    password_symbols = [random.choice(SYMBOLS) for char in range(random.randint(2,4))]
+    password_num = [random.choice(NUMBERS) for char in range(random.randint(2,4))]
+
+    password_list = password_letters + password_symbols + password_num
+    random.shuffle(password_list)
+    password = "".join(password_list)
+
+    pass_entry.insert(0, password)
+    py.copy(password)
 
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 
 def save_password():
-    with open("data.txt", mode="a") as file:
-        file.write(f"{web_entry.get()} | {email_entry.get()} | {pass_entry.get()}\n")
+    is_valid = True
+    if len(web_entry.get()) == 0 or len(email_entry.get()) == 0 or len(pass_entry.get()) == 0:
+        messagebox.showerror(title="Error", message="Please make sure to not leave any fields empty.")
+        is_valid = False
+
+    elif is_valid:
+        is_ok = messagebox.askokcancel(title="Confirmation",
+                               message=f"These are the details entered:\n"
+                                       f"Website: {web_entry.get()}\n"
+                                       f"Email: {email_entry.get()}\n"
+                                       f"Password: {pass_entry.get()}\n"
+                                       f"Is this okay to save?")
+
+        if is_ok:
+            with open("data.txt", mode="a") as file:
+                file.write(f"{web_entry.get()} | {email_entry.get()} | {pass_entry.get()}\n")
+                web_entry.delete(0, END)
+                pass_entry.delete(0, END)
 
 # ---------------------------- UI SETUP ------------------------------- #
 window = Tk()
@@ -42,7 +80,7 @@ pass_entry = Entry(width=35)
 pass_entry.grid(column=1, row=3, sticky="w")
 
 #Buttons
-generate_bt = Button(text="Generate Password", width=15)
+generate_bt = Button(text="Generate Password", width=15, command=generate_password)
 generate_bt.grid(column=2, row=3, sticky="e")
 add_bt = Button(text="Add", width=46, command=save_password)
 add_bt.grid(column=1, row=4, columnspan=2, sticky="w")
