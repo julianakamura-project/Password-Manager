@@ -2,6 +2,7 @@ import random
 from tkinter import *
 from tkinter import messagebox
 import pyperclip as py
+import json
 
 FONT = "Arial"
 LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
@@ -27,26 +28,54 @@ def generate_password():
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 
 def save_password():
-    is_valid = True
+    new_data = {
+        web_entry.get(): {
+            "email": email_entry.get(),
+            "password": pass_entry.get(),
+            }
+    }
+
     if len(web_entry.get()) == 0 or len(email_entry.get()) == 0 or len(pass_entry.get()) == 0:
         messagebox.showerror(title="Error", message="Please make sure to not leave any fields empty.")
-        is_valid = False
 
-    elif is_valid:
-        is_ok = messagebox.askokcancel(title="Confirmation",
-                               message=f"These are the details entered:\n"
-                                       f"Website: {web_entry.get()}\n"
-                                       f"Email: {email_entry.get()}\n"
-                                       f"Password: {pass_entry.get()}\n"
-                                       f"Is this okay to save?")
+    else:
+        try:
+            with open("data.json", mode="r") as file:
+                data = json.load(file)
 
-        if is_ok:
-            with open("data.txt", mode="a") as file:
-                file.write(f"{web_entry.get()} | {email_entry.get()} | {pass_entry.get()}\n")
-                web_entry.delete(0, END)
-                pass_entry.delete(0, END)
+        except FileNotFoundError:
+            with open("data.json", mode="w") as file:
+                json.dump(new_data, file, indent=4)
+
+        else:
+            data.update(new_data)
+
+            with open("data.json", mode="w") as file:
+                json.dump(data, file, indent=4)
+
+        finally:
+            web_entry.delete(0, END)
+            pass_entry.delete(0, END)
+
+
+# ---------------------------- LOAD DATA ------------------------------- #
+
+def load_data():
+    with open("data.json", mode="r") as file:
+        data = json.load(file)
+
+        if web_entry.get() in data:
+            email_entry.delete(0, END)
+            pass_entry.delete(0, END)
+
+            email_entry.insert(0, data[web_entry.get()]["email"])
+            pass_entry.insert(0, data[web_entry.get()]["password"])
+
+        else:
+            messagebox.showerror(title="Error", message="Data not found.")
 
 # ---------------------------- UI SETUP ------------------------------- #
+
 window = Tk()
 window.title("Password Manager")
 window.config(padx=50,pady=50)
@@ -82,7 +111,10 @@ pass_entry.grid(column=1, row=3, sticky="w")
 #Buttons
 generate_bt = Button(text="Generate Password", width=15, command=generate_password)
 generate_bt.grid(column=2, row=3, sticky="e")
-add_bt = Button(text="Add", width=46, command=save_password)
+add_bt = Button(text="Add Data", width=46, command=save_password)
 add_bt.grid(column=1, row=4, columnspan=2, sticky="w")
+load_bt = Button(text="Load Data", width=15, command=load_data)
+load_bt.grid(column=2, row=2, sticky="e")
+
 
 window.mainloop()
